@@ -23,6 +23,15 @@ pipeline {
         }
 
         stage('Manual Approval') {
+          agent {
+            node {
+              label 'docker'
+            }
+
+          }
+          environment {
+            ci = 'true'
+          }
           steps {
             sh '''steps {
                 input message: \'Lanjutkan ke tahap Deploy?\'
