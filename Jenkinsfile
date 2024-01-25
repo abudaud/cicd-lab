@@ -40,6 +40,15 @@ pipeline {
           }
 
           stage('Deploy') {
+            agent {
+              node {
+                label 'doker'
+              }
+
+            }
+            environment {
+              ci = 'true'
+            }
             steps {
               sh '''agent {
          docker {
