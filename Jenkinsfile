@@ -22,27 +22,34 @@ pipeline {
           }
         }
 
-        stage('Deliver') {
-          agent {
-            node {
-              label 'docker'
+        stage('Manual Approval') {
+          steps {
+            sh '''steps {
+                input message: \'Lanjutkan ke tahap Deploy?\'
+            }'''
+            }
+          }
+
+          stage('Deploy') {
+            steps {
+              sh '''agent {
+         docker {
+                    image \'cdrx/pyinstaller-linux:python2\'
+                }
+            }
+            steps {
+                sh \'pyinstaller --onefile sources/add2vals.py\'
+            }
+            post {
+                success {
+                    archiveArtifacts \'dist/add2vals\'
+                    sleep(time: 1, unit: \'MINUTES\')
+                }'''
+              }
             }
 
           }
           environment {
             CI = 'true'
           }
-          steps {
-            sh ''' steps {
-                sh \'./jenkins/scripts/deliver.sh\'
-                input message: \'Finished using the website? (Click "Proceed" to continue)\'
-                sh \'./jenkins/scripts/kill.sh\'
-            }'''
-            }
-          }
-
         }
-        environment {
-          CI = 'true'
-        }
-      }
