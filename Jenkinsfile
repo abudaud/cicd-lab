@@ -7,6 +7,15 @@ pipeline {
   }
   stages {
     stage('Build') {
+      agent {
+        node {
+          label 'docker'
+        }
+
+      }
+      environment {
+        CI = 'true'
+      }
       steps {
         sh '''steps {
                 sh \'npm install\'
@@ -15,6 +24,15 @@ pipeline {
       }
 
       stage('Test') {
+        agent {
+          node {
+            label 'docker'
+          }
+
+        }
+        environment {
+          CI = 'true'
+        }
         steps {
           sh '''steps {
                 sh \'./jenkins/scripts/test.sh\'
@@ -30,7 +48,7 @@ pipeline {
 
           }
           environment {
-            ci = 'true'
+            CI = 'true'
           }
           steps {
             sh '''steps {
@@ -50,11 +68,7 @@ pipeline {
               ci = 'true'
             }
             steps {
-              sh '''agent {
-         docker {
-                    image \'cdrx/pyinstaller-linux:python2\'
-                }
-            }
+              sh '''
             steps {
                 sh \'pyinstaller --onefile sources/add2vals.py\'
             }
@@ -63,11 +77,11 @@ pipeline {
                     archiveArtifacts \'dist/add2vals\'
                     sleep(time: 1, unit: \'MINUTES\')
                 }'''
-              }
             }
+          }
 
-          }
-          environment {
-            CI = 'true'
-          }
         }
+        environment {
+          CI = 'true'
+        }
+      }
