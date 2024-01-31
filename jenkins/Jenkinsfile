@@ -1,31 +1,87 @@
 pipeline {
-    agent {
+  agent {
+    node {
+      label 'docker'
+    }
+
+  }
+  stages {
+    stage('Build') {
+      agent {
         node {
-            label 'ubuntu'
-            customWorkspace "/src/$BUILD_NUMBER"
+          label 'docker'
         }
-    }
-    environment {
-        SRC_DIR = "$WORKSPACE"
-        BUILD_DIR="/build/$BUILD_NUMBER"
-    }
 
-    stages {
-        stage('Build') {
-            steps {
-                dir(BUILD_DIR) {
-                    sh '$SRC_DIR/build.sh'
-                }
+      }
+      environment {
+        CI = 'true'
+      }
+      steps {
+        sh '''steps {
+                sh \'npm install\'
+            }'''
+        }
+      }
+
+      stage('Test') {
+        agent {
+          node {
+            label 'docker'
+          }
+
+        }
+        environment {
+          CI = 'true'
+        }
+        steps {
+          sh '''steps {
+                sh \'./jenkins/scripts/test.sh\'
+            }'''
+          }
+        }
+
+        stage('Manual Approval') {
+          agent {
+            node {
+              label 'docker'
             }
-        }
 
-        stage('Test') {
-            steps {
-                dir(BUILD_DIR) {
-                   sh '$SRC_DIR/test.sh'
-                }
+          }
+          environment {
+            CI = 'true'
+          }
+          steps {
+            sh '''steps {
+                input message: \'Lanjutkan ke tahap Deploy?\'
+            }'''
             }
-        }
-    }
-}
+          }
 
+          stage('Deploy') {
+            agent {
+              node {
+                label 'doker'
+              }
+
+            }
+            environment {
+              ci = 'true'
+            }
+            steps {
+              sh '''
+            steps {
+                sh \'pyinstaller --onefile sources/add2vals.py\'
+            }
+            post {
+                success {
+                    archiveArtifacts \'dist/add2vals\'
+                    sleep(time: 1, unit: \'MINUTES\')
+                }'''
+            }
+          }
+
+        }
+        environment {
+          CI = 'true'
+        }
+      }
