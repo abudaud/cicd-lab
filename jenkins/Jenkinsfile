@@ -1,16 +1,31 @@
-node {
-        stage('Manual Approval') {
-        input message: 'Lanjutkan ke tahap Deploy?'
+pipeline {
+    agent {
+        node {
+            label 'ubuntu'
+            customWorkspace "/src/$BUILD_NUMBER"
+        }
     }
-    try {
-        stage('Deploy') {
-            docker.image('cdrx/pyinstaller-linux:python2').inside {
-                sh 'pyinstaller --onefile sources/add2vals.py'
+    environment {
+        SRC_DIR = "$WORKSPACE"
+        BUILD_DIR="/build/$BUILD_NUMBER"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                dir(BUILD_DIR) {
+                    sh '$SRC_DIR/build.sh'
+                }
             }
         }
-    } finally {
-        archiveArtifacts 'dist/add2vals'
-        sleep(time: 1, unit: 'MINUTES')
+
+        stage('Test') {
+            steps {
+                dir(BUILD_DIR) {
+                   sh '$SRC_DIR/test.sh'
+                }
+            }
+        }
     }
 }
 
