@@ -1,87 +1,30 @@
 pipeline {
-  agent {
-    node {
-      label 'docker'
+    agent {
+        docker {
+            image 'node:lts-buster-slim'
+            args '-p 3000:3000'
+        }
     }
-
-  }
-  stages {
-    stage('Build') {
-      agent {
-        node {
-          label 'docker'
-        }
-
-      }
-      environment {
+    environment {
         CI = 'true'
-      }
-      steps {
-        sh '''steps {
-                sh \'npm install\'
-            }'''
-        }
-      }
-
-      stage('Test') {
-        agent {
-          node {
-            label 'docker'
-          }
-
-        }
-        environment {
-          CI = 'true'
-        }
-        steps {
-          sh '''steps {
-                sh \'./jenkins/scripts/test.sh\'
-            }'''
-          }
-        }
-
-        stage('Manual Approval') {
-          agent {
-            node {
-              label 'docker'
-            }
-
-          }
-          environment {
-            CI = 'true'
-          }
-          steps {
-            sh '''steps {
-                input message: \'Lanjutkan ke tahap Deploy?\'
-            }'''
-            }
-          }
-
-          stage('Deploy') {
-            agent {
-              node {
-                label 'doker'
-              }
-
-            }
-            environment {
-              ci = 'true'
-            }
+    }
+    stages {
+        stage('Build') {
             steps {
-              sh '''
+                sh 'npm install'
+            }
+        }
+        stage('Test') {
             steps {
-                sh \'pyinstaller --onefile sources/add2vals.py\'
+                sh './jenkins/scripts/test.sh'
             }
-            post {
-                success {
-                    archiveArtifacts \'dist/add2vals\'
-                    sleep(time: 1, unit: \'MINUTES\')
-                }'''
+        }
+        stage('Deliver') {
+            steps {
+                sh './jenkins/scripts/deliver.sh'
+                input message: 'Finished using the website? (Click "Proceed" to continue)'
+                sh './jenkins/scripts/kill.sh'
             }
-          }
-
         }
-        environment {
-          CI = 'true'
-        }
-      }
+    }
+}
