@@ -1,14 +1,21 @@
-node {
-    docker.image('node:ea7f826b1553').inside('-p 3000:3000') {
-        withEnv(['CI = true']) {
-            stage('Manual Approval') {
-                input message: 'Lanjutkan ke tahap Deploy?'
-            }
-            stage('Deploy') {
-                sh './jenkins/scripts/deliver.sh'
-                sleep(time: 1, unit: 'MINUTES')
-                sh './jenkins/scripts/kill.sh'
-            }
-        }
+pipeline {
+  agent none
+  stages {
+    stage('Back-end') {
+      agent {
+        docker { image 'maven:3.8.1-adoptopenjdk-11' }
+      }
+      steps {
+        sh 'mvn --version'
+      }
     }
+    stage('Front-end') {
+      agent {
+        docker { image 'node:16-alpine' }
+      }
+      steps {
+        sh 'node --version'
+      }
+    }
+  }
 }
