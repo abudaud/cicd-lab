@@ -1,26 +1,24 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:lts-buster-slim'
+            args '-p 3000:3000'
+        }
+    }
+    environment {
+        CI = 'true'
+    }
     stages {
-        ...
-        stage('Manual Approval') {
+        ...        stage('Manual Approval') {
             steps {
                 input message: 'Lanjutkan ke tahap Deploy?'
             }
         }
         stage('Deploy') {
-            agent {
-                docker {
-                    image 'cdrx/pyinstaller-linux:python2'
-                }
-            }
             steps {
-                sh 'pyinstaller --onefile sources/add2vals.py'
-            }
-            post {
-                success {
-                    archiveArtifacts 'dist/add2vals'
-                    sleep(time: 1, unit: 'MINUTES')
-                }
+                sh './jenkins/scripts/deliver.sh'
+                sleep(time: 1, unit: 'MINUTES')
+                sh './jenkins/scripts/kill.sh'
             }
         }
     }
