@@ -1,23 +1,41 @@
 pipeline {
     agent {
         docker {
-            image 'node:lts-buster-slim'
-            args '-p 3000:3000'
+            image 'node:lts-alpine'
+            args '-p 3000:3000 -p 5000:5000'
         }
     }
     environment {
         CI = 'true'
     }
     stages {
-        ...        stage('Manual Approval') {
+        stage('Build') {
             steps {
-                input message: 'Lanjutkan ke tahap Deploy?'
+                sh 'npm install'
             }
         }
-        stage('Deploy') {
+        stage('Test') {
             steps {
-                sh './jenkins/scripts/deliver.sh'
-                sleep(time: 1, unit: 'MINUTES')
+                sh './jenkins/scripts/test.sh'
+            }
+        }
+        stage('Deliver for development') {
+            when {
+                branch 'development'
+            }
+            steps {
+                sh './jenkins/scripts/deliver-for-development.sh'
+                input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                sh './jenkins/scripts/kill.sh'
+            }
+        }
+        stage('Deploy for production') {
+            when {
+                branch 'production'
+            }
+            steps {
+                sh './jenkins/scripts/deploy-for-production.sh'
+                input message: 'Finished using the web site? (Click "Proceed" to continue)'
                 sh './jenkins/scripts/kill.sh'
             }
         }
