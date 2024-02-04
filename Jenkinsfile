@@ -1,16 +1,27 @@
 pipeline {
-    agent any
+    agent none
     stages {
-        stage('Build') {
+        ...
+        stage('Manual Approval') {
             steps {
-                sh 'echo "Hello World"'
-                sh '''
-                    echo "Multiline shell steps works too"
-                    ls -lah
-                '''
+                input message: 'Lanjutkan ke tahap Deploy?'
             }
         }
-
-      
+        stage('Deploy') {
+            agent {
+                docker {
+                    image 'cdrx/pyinstaller-linux:python2'
+                }
+            }
+            steps {
+                sh 'pyinstaller --onefile sources/add2vals.py'
+            }
+            post {
+                success {
+                    archiveArtifacts 'dist/add2vals'
+                    sleep(time: 1, unit: 'MINUTES')
+                }
+            }
+        }
     }
 }
