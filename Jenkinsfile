@@ -1,43 +1,29 @@
-pipeline {
-    agent {
-        docker {
-         //   image 'node:lts-alpine'
-            image 'ea7f826b1553'
-            args '-p 3000:3000 -p 5000:5000'
-        }
-    }
-    environment {
-        CI = 'true'
-    }
     stages {
-        stage('Build') {
+        stage('Pull source code') {
             steps {
-                sh 'npm install'
+                echo 'Pull Code'
+                sh 'git clone code'
+                sh 'git pull code'
             }
         }
-        stage('Test') {
+        stage('Build image') {
             steps {
-                sh './jenkins/scripts/test.sh'
+                echo 'build image'
+                sh 'docker build -t app:latest .'
             }
         }
-        stage('Deliver for development') {
-            when {
-                branch 'development'
-            }
+        stage('Push image') {
             steps {
-                sh './jenkins/scripts/deliver-for-development.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+                echo 'retage image'
+                sh 'docker tag nodeapp:latest gcr.io/project-gcr/app:latest'
+                echo 'push image'
+                sh 'docker push gcr.io/project-gcr/app:latest'
             }
         }
-        stage('Deploy for production') {
-            when {
-                branch 'production'
-            }
+        stage('Deploy') {
             steps {
-                sh './jenkins/scripts/deploy-for-production.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+                echo 'Deploying'
+                sh 'kubectl rollout restart deployment app-deployment -n gunawan'
             }
         }
     }
