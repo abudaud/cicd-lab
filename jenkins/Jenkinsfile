@@ -12,6 +12,12 @@ pipeline {
                 echo 'Testing..'
             }
         }
+         stage('Manual Approval') {
+            steps {
+                echo 'Manual Approving...'
+            }
+        }
+        
         stage('Deploy') {
             steps {
                 echo 'Deploying....'
